@@ -22,7 +22,7 @@ unit_testing:
     policy: pull-push
     when: on_success
     paths:
-      - node_module
+      - node_modules
     key:
       files:
         - package-lock.json
@@ -47,7 +47,7 @@ code_coverage:
     policy: pull-push
     when: on_success
     paths:
-      - node_module
+      - node_modules
     key:
       files:
         - package-lock.json
