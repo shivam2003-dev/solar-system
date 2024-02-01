@@ -14,6 +14,7 @@ stages:
 variables:
     DOCKER_USERNAME: siddharth67
     IMAGE_VERSION: $CI_PIPELINE_ID
+    K8S_IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 #   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
 #   MONGO_USERNAME: superuser
 #   MONGO_PASSWORD: $M_DB_PASSWORD
@@ -155,8 +156,13 @@ k8s_dev_deploy:
     - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
     - chmod +x ./kubectl
     - mv ./kubectl /usr/bin/kubectl
+    - apk add --no-cache gettext
+    - envsubst -V
   script:
     - export KUBECONFIG=$DEV_KUBE_CONFIG
     - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
+    - export INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+    - echo $INGRESS_IP
+    - for i in kubernetes/manifest/*.yaml; do envsubst < $i ; done
