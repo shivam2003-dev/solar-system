@@ -15,9 +15,9 @@ variables:
     DOCKER_USERNAME: siddharth67
     IMAGE_VERSION: $CI_PIPELINE_ID
     K8S_IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-#   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-#   MONGO_USERNAME: superuser
-#   MONGO_PASSWORD: $M_DB_PASSWORD
+    MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+    MONGO_USERNAME: superuser
+    MONGO_PASSWORD: $M_DB_PASSWORD
 
 # unit_testing:
 #   stage: test
@@ -87,49 +87,49 @@ variables:
 #   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
 #   allow_failure: true
 
-# docker_build:
-#   stage: containerization
-#   image: docker:24.0.5
-#   dependencies: []
-#   services:
-#     - docker:24.0.5-dind
-#   script:
-#     - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
-#     - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-#     - mkdir image
-#     - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image-$IMAGE_VERSION.tar
-#   artifacts:
-#     paths:
-#       - image
-#     when: on_success
-#     expire_in: 3 days
+docker_build:
+  stage: containerization
+  image: docker:24.0.5
+  dependencies: []
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
+    - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+    - mkdir image
+    - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image-$IMAGE_VERSION.tar
+  artifacts:
+    paths:
+      - image
+    when: on_success
+    expire_in: 3 days
 
-# docker_test:
-#   stage: containerization
-#   image: docker:24.0.5
-#   needs:
-#     - docker_build
-#   services:
-#     - docker:24.0.5-dind
-#   script:
-#     - docker load -i image/solar-system-image-$IMAGE_VERSION.tar
-#     - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-#     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-#     - echo $IP
-#     - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
+docker_test:
+  stage: containerization
+  image: docker:24.0.5
+  needs:
+    - docker_build
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker load -i image/solar-system-image-$IMAGE_VERSION.tar
+    - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+    - echo $IP
+    - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
 
-# docker_push:  
-#   stage: containerization
-#   needs:
-#     - docker_build
-#     - docker_test
-#   image: docker:24.0.5
-#   services:
-#     - docker:24.0.5-dind
-#   script:
-#     -  docker load -i image/solar-system-image-$IMAGE_VERSION.tar
-#     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-#     -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+docker_push:  
+  stage: containerization
+  needs:
+    - docker_build
+    - docker_test
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    -  docker load -i image/solar-system-image-$IMAGE_VERSION.tar
+    -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+    -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
 # publish_gitlab_container_registry:  
 #   stage: containerization
@@ -165,4 +165,6 @@ k8s_dev_deploy:
     - kubectl get nodes
     - export INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
     - echo $INGRESS_IP
-    - for i in kubernetes/manifest/*.yaml; do envsubst < $i ; done
+    - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI=$MONGO_URI --from-literal=MONGO_USERNAME=$MONGO_USERNAME --from-literal=MONGO_PASSWORD=$MONGO_PASSWORD --save-config --dry-run=client -o yaml | kubectl apply -f -
+    - for i in kubernetes/manifest/*.yaml; do envsubst < $i | kubectl apply -f -; done
+    - kubectl -n $NAMESPACE get all,secret,ing
