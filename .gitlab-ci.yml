@@ -9,7 +9,6 @@ workflow:
 stages:
   - test
   - containerization
-  - dev-deploy
 
 variables:
     DOCKER_USERNAME: siddharth67
@@ -145,15 +144,3 @@ publish_gitlab_container_registry:
     -  docker tag $DOCKER_USERNAME/solar-system:$IMAGE_VERSION $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION 
     -  docker images
     -  docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
-
-k8s_dev_deploy:
-  stage: dev-deploy
-  image:
-    name: alpine:3.7
-  dependencies: []
-  before_script:
-    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/bin/kubectl
-  script:
-    - kubectl version -o yaml
