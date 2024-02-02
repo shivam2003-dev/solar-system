@@ -172,6 +172,9 @@ k8s_dev_deploy:
   artifacts:
     reports:
       dotenv: app_ingress_url.env
+  environment:
+    name: development
+    url: https://$INGRESS_URL
 
 k8s_dev_integration_testing:
   stage: dev-deploy
