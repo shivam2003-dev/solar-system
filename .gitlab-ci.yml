@@ -3,10 +3,9 @@ deploy:
     name: bitnami/kubectl:latest
     entrypoint: ['']
   script:
-    - printenv
-    - ls -ltra
+    - printenv KUBECONFIG
     - echo $KUBECONFIG
     - cat /builds/demos-group/solar-system.tmp/KUBECONFIG
     - kubectl config get-contexts
-    - kubectl config use-context path/to/agent/project:agent-name
+    - kubectl config view
     - kubectl get pods
