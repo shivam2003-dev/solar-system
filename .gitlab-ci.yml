@@ -168,7 +168,7 @@ k8s_dev_deploy:
 
 k8s_dev_integration_testing:
   stage: dev-deploy
-  image: alpine:3.7
+  image: alpine:3.4
   needs:
     - k8s_dev_deploy
   before_script:
@@ -204,13 +204,8 @@ k8s_stage_deploy:
 
 k8s_stage_integration_testing:
   stage: stage-deploy
-  image: alpine:3.7
+  image: !reference [k8s_dev_integration_testing, image]
   needs:
     - k8s_stage_deploy
-  before_script:
-    - apk --no-cache add curl
-    - apk --no-cache add jq
-  script:
-    - echo $INGRESS_URL
-    - curl -s -k https://$INGRESS_URL/live | jq -r .status | grep -i live
-    - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
+  before_script: !reference [k8s_dev_integration_testing, before_script]
+  script: !reference [k8s_dev_integration_testing, script]
