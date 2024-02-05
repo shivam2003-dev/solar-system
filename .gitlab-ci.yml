@@ -13,7 +13,8 @@ stages:
   - stage-deploy
 
 include:
-  - component: gitlab.com/gitlab-components/code-quality/code-quality@1.0
+  # - component: gitlab.com/gitlab-components/code-quality/code-quality@1.0
+  - template: Jobs/SAST.gitlab-ci.yml
 
 variables:
     DOCKER_USERNAME: siddharth67
@@ -22,6 +23,7 @@ variables:
     MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
     MONGO_USERNAME: superuser
     MONGO_PASSWORD: $M_DB_PASSWORD
+    SCAN_KUBERNETES_MANIFESTS: "true"
 
 .prepare_nodejs_environment:
   image: node:17-alpine3.14
@@ -56,14 +58,17 @@ variables:
     - apk add --no-cache gettext
     - envsubst -V  
 
-code_quality:
-  stage: ".pre"
-  variables:
-    REPORT_FORMAT: html
-  artifacts:
-    paths: [gl-code-quality-report.html]
-    reports:
-      codequality: []
+# code_quality:
+#   stage: ".pre"
+#   variables:
+#     REPORT_FORMAT: html
+#   artifacts:
+#     paths: [gl-code-quality-report.html]
+#     reports:
+#       codequality: []
+
+sast:
+  stage: .pre
 
 unit_testing:
   stage: test
