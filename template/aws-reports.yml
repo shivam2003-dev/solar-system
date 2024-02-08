@@ -1,0 +1,24 @@
+variables:
+  MINIO_URL: https://a8eb23c9-b9f6-490b-8421-b6671e06ff6e-10-244-7-127-30717.papa.r.killercoda.com/
+  BUCKET_NAME: solar-system-reports-bucket
+  AWS_ACCESS_KEY_ID: minioadmin
+  AWS_SECRET_ACCESS_KEY: minioadmin
+
+reporting:
+  stage: reporting
+  needs:
+    - unit_testing
+  image:
+    name: amazon/aws-cli:latest
+    entrypoint: 
+      - '/usr/bin/env'
+  before_script:
+    - ls -ltr
+    - mkdir reports-$CI_PIPELINE_ID
+    - mv test-results.xml reports-$CI_PIPELINE_ID/
+    - ls -ltr reports-$CI_PIPELINE_ID/
+  script:
+    - aws configure set default.s3.signature_version s3v4
+    - aws --endpoint-url=$MINIO_URL s3 ls s3://$BUCKET_NAME
+    - aws --endpoint-url=$MINIO_URL s3 cp ./reports-$CI_PIPELINE_ID s3://$BUCKET_NAME/reports-$CI_PIPELINE_ID --recursive
+    - aws --endpoint-url=$MINIO_URL s3 ls s3://$BUCKET_NAME

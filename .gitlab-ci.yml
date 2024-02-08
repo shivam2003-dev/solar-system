@@ -8,11 +8,13 @@ workflow:
           
 stages:
   - test
+  - reporting
   - containerization
   - dev-deploy
   - stage-deploy
 
-# include:
+include:
+    - local: 'template/aws-reports.yml'
 #   - component: gitlab.com/gitlab-components/code-quality/code-quality@1.0
 #   - template: Jobs/SAST.gitlab-ci.yml
 #   - component: gitlab.com/gitlab-components/secret-detection/secret-detection@1.0
@@ -97,6 +99,13 @@ unit_testing:
       - test-results.xml
     reports:
       junit: test-results.xml
+
+reporting:
+  stage: reporting
+  tags:
+    - docker
+    - linux
+    - aws
 
 # code_coverage:
 #   stage: test
