@@ -37,23 +37,9 @@ jobs:
         - name: Unit Testing
           run: npm test
   
-        # - name: Delete Existing Artifact
-        #   if: always()
-        #   run: |
-        #     echo "Checking for existing artifacts..."
-        #     if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/artifacts?name=Mocha%20Test%20Result" | grep -q "id"; then
-        #       artifact_id=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/artifacts?name=Mocha%20Test%20Result" | jq -r ".artifacts[0].id")
-        #       echo "Deleting existing artifact with ID $artifact_id..."
-        #       curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$artifact_id"
-        #     else
-        #       echo "No existing artifact found."
-        #     fi
-  
-        # - name: Archive Test Result
-        #   uses: actions/upload-artifact@v4
-        #   with:
-        #     name: Mocha Test Result
-        #     path: test-results.xml
-
-    #hbh 
+        - name: Archive Test Result
+          uses: actions/upload-artifact@v3
+          with:
+            name: Mocha Test Result
+            path: test-results.xml
   
