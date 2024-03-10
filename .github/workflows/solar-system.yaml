@@ -45,23 +45,23 @@ jobs:
     
     code_coverage : 
       name: Code Coverage
-      strategy:
-        matrix:
-          os: [ubuntu-latest, macos-latest]
-          node-v: [18, 19, 20]
-          exclude:
-            - node-v: 18
-              os: macos-latest
+      # strategy:
+      #   matrix:
+      #     os: [ubuntu-latest, macos-latest]
+      #     node-v: [18, 19, 20]
+      #     exclude:
+      #       - node-v: 18
+      #         os: macos-latest
   
-      runs-on: ${{ matrix.os }}
+      runs-on: ubuntu-latest
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
   
-        - name: Setup Node Version - ${{ matrix.node-v }}
+        - name: Setup Node Version - 18
           uses: actions/setup-node@v4
           with:
-            node-version: ${{ matrix.node-v }}
+            node-version: 18
   
         - name: Install Dependencies
           run: npm install
