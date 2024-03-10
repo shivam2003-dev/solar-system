@@ -1,34 +1,92 @@
-name : Solar System Workflows
-
 on:
-    workflow_dispatch: 
+    workflow_dispatch:
     push:
-        branches: 
-            - main
-            - exploring-workflow
+      branches:
+        - main
+        - exploring-workflow
 
 env:
-    MONGO_URI : 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+    MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
     MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}  # 'superuser'
-    MONGO_PASSWORD : ${{ secrets.MONGO_PASSWORD }} #'SuperPassword'
-
+    MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }} #'SuperPassword'
+  
 jobs:
     unit-testing:
-        name: Unit Testing
-        runs-on: ubuntu-latest
-        steps: 
-            - name: Checkout Repository
-              uses: actions/checkout@v4
+      name: Unit Testing
+      strategy:
+        matrix:
+          os: [ubuntu-latest, macos-latest]
+          node-v: [18, 19, 20]
+          exclude:
+            - node-v: 18
+              os: macos-latest
+  
+      runs-on: ${{ matrix.os }}
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+  
+        - name: Setup Node Version - ${{ matrix.node-v }}
+          uses: actions/setup-node@v4
+          with:
+            node-version: ${{ matrix.node-v }}
 
-            - name: Setup Node Version - 18
-              uses: actions/setup-node@v4
-              with: 
-                node-version: 18
+        - name : Cache NPM Dependency
+          uses : actions/cache@v3
+          with: 
+            path: node_modules
+            key : ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json')}}
+  
+        - name: Install Dependencies
+          run: npm install
+  
+        - name: Unit Testing
+          id : nodejs-testing-step
+          run: npm test
+  
+        - name: Archive Test Result
+          if : always()
+          uses: actions/upload-artifact@v3
+          with:
+            name: Mocha Test Result
+            path: test-results.xml
+    
+    code_coverage : 
+      name: Code Coverage
+      # strategy:
+      #   matrix:
+      #     os: [ubuntu-latest, macos-latest]
+      #     node-v: [18, 19, 20]
+      #     exclude:
+      #       - node-v: 18
+      #         os: macos-latest
+  
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+  
+        - name: Setup Node Version - 18
+          uses: actions/setup-node@v4
+          with:
+            node-version: 18
 
-            - name : Install Dependencies
-              run : npm install
-              
-            - name : Unit Testing 
-              run : npm test
-
-              
+        - name : Cache NPM Dependency
+          uses : actions/cache@v3
+          with: 
+            path: node_modules
+            key : ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json')}}
+  
+        - name: Install Dependencies
+          run: npm install
+  
+        - name: Check Code Coverage
+          continue-on-error: true
+          run: npm run coverage
+  
+        - name: Archive Test Result
+          uses: actions/upload-artifact@v3
+          with:
+            name: Code coverage reult 
+            path: coverage
+            retention-days: 5
