@@ -16,7 +16,7 @@ jobs:
       strategy:
         matrix:
           os: [ubuntu-latest, macos-latest]
-          node-v: [18, 19, 20]
+          node-v: [20] 
           exclude:
             - node-v: 18
               os: macos-latest
