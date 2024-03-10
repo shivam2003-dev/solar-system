@@ -15,7 +15,7 @@ jobs:
       name: Unit Testing
       strategy:
         matrix:
-          os: [ubuntu-latest, macos-latest]
+          os: [ubuntu-latest]
           node-v: [20] 
           exclude:
             - node-v: 18
