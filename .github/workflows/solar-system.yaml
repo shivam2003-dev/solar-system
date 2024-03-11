@@ -10,9 +10,20 @@ env:
     MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}  # 'superuser'
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }} #'SuperPassword'
   
+  
 jobs:
     unit-testing:
       name: Unit Testing
+      services:
+        mongo-db: 
+          image: siddharth67/mongo-db:non-prod
+          ports:
+            - 27017:27017
+      env:
+          MONGO_URI: 'mongodb://localhost:27017/superData'
+          MONGO_USERNAME: non-prod-user  # 'superuser'
+          MONGO_PASSWORD: non-prod-password  #'SuperPassword'
+
       strategy:
         matrix:
           os: [ubuntu-latest]
@@ -62,14 +73,27 @@ jobs:
       #         os: macos-latest
   
       runs-on: ubuntu-latest
+      container: 
+        image: node:18
+      services:
+        mongo-db: 
+          image: siddharth67/mongo-db:non-prod
+          options: 
+            --name  mongo 
+      env:
+          MONGO_URI: 'mongodb://mongo:27017/superData'
+          MONGO_USERNAME: non-prod-user  # 'superuser'
+          MONGO_PASSWORD: non-prod-password  #'SuperPassword'
+
+
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
   
-        - name: Setup Node Version - 18
-          uses: actions/setup-node@v4
-          with:
-            node-version: 18
+        # - name: Setup Node Version - 18
+        #   uses: actions/setup-node@v4
+        #   with:
+        #     node-version: 18
 
         - name : Cache NPM Dependency
           uses : actions/cache@v3
@@ -93,12 +117,21 @@ jobs:
 
     docker:
       name: Containerization
+      permissions: 
+        packages: write
       needs: [code_coverage, unit-testing]
       runs-on: ubuntu-latest
       steps:
         - name: Checkout Repo
           uses: actions/checkout@v4
     
+        - name: GITHUB Login
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io 
+            username: ${{ github.repository_owner }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
         - name: Dockerhub Login
           uses: docker/login-action@v3
           with:
@@ -127,3 +160,12 @@ jobs:
     
             echo Testing image URL using wget
             wget -q -O - 127.0.0.1:3000/live | grep live
+
+        - name: Container registry push 
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            push: true
+            tags: |
+              ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+              ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
